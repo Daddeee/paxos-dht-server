@@ -18,9 +18,11 @@ public class Dispatcher {
     private BlockingQueue<ProtocolMessage> proposerQueue;
     private BlockingQueue<ProtocolMessage> acceptorQueue;
     private BlockingQueue<ProtocolMessage> learnerQueue;
+    private BlockingQueue<ProtocolMessage> electorQueue;
     private QueueProducer<ProtocolMessage> proposerQueueProducer;
     private QueueProducer<ProtocolMessage> acceptorQueueProducer;
     private QueueProducer<ProtocolMessage> learnerQueueProducer;
+    private QueueProducer<ProtocolMessage> electorQueueProducer;
 
     public Dispatcher(Receiver receiver) {
         this.recvConsumer = receiver.getRecvConsumer();
@@ -29,9 +31,11 @@ public class Dispatcher {
         this.proposerQueue = new LinkedBlockingQueue<>();
         this.acceptorQueue = new LinkedBlockingQueue<>();
         this.learnerQueue = new LinkedBlockingQueue<>();
+        this.electorQueue = new LinkedBlockingQueue<>();
         this.proposerQueueProducer = new QueueProducer<>(this.proposerQueue);
         this.acceptorQueueProducer = new QueueProducer<>(this.acceptorQueue);
         this.learnerQueueProducer = new QueueProducer<>(this.learnerQueue);
+        this.electorQueueProducer = new QueueProducer<>(this.electorQueue);
     }
 
     public QueueConsumer<ProtocolMessage> getProposerConsumer() {
@@ -44,6 +48,10 @@ public class Dispatcher {
 
     public QueueConsumer<ProtocolMessage> getLearnerConsumer() {
         return new QueueConsumer<>(this.learnerQueue);
+    }
+
+    public QueueConsumer<ProtocolMessage> getElectorConsumer() {
+        return new QueueConsumer<>(this.electorQueue);
     }
 
     private void dispatch(CommunicationMessage m) {
@@ -64,6 +72,12 @@ public class Dispatcher {
                 break;
             case LEARN:
                 this.learnerQueueProducer.produce((Learn) message.getBody());
+                break;
+            case ELECTION:
+                this.electorQueueProducer.produce((Election) message.getBody());
+                break;
+            case HEARTBEAT:
+                this.electorQueueProducer.produce((HeartBeat) message.getBody());
                 break;
             default:
                 LOGGER.error("Unrecognized message");

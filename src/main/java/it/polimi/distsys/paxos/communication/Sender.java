@@ -35,7 +35,8 @@ public class Sender {
             socket.close();
             o.close();
         } catch (IOException e) {
-            LOGGER.error("Error while sending a messages.", e);
+            LOGGER.error("Error while sending a messages.");
+            //LOGGER.error("Error while sending a messages.", e);
         }
     }
 }

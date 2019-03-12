@@ -7,7 +7,9 @@ import it.polimi.distsys.paxos.communication.messages.CommunicationMessage;
 import it.polimi.distsys.paxos.network.messages.NetworkMessage;
 import it.polimi.distsys.paxos.utils.QueueProducer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -26,6 +28,10 @@ public class Forwarder {
 
     public int getNumReceivers() {
         return receivers.size();
+    }
+
+    public List<Integer> getReceiversIds() {
+        return new ArrayList<>(receivers.keySet());
     }
 
     public void send(ProtocolMessage m, int toId) {

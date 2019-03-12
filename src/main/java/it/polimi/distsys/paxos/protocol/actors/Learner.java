@@ -12,11 +12,13 @@ import java.util.function.Consumer;
 
 public class Learner extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Learner.class);
+    private static Learner instance;
     private Consumer<ProposalValue> learnedConsumer;
 
     public Learner(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<ProposalValue> learnedConsumer) {
         super(forwarder, consumer);
         this.learnedConsumer = learnedConsumer;
+        instance = this;
     }
 
     @Override
@@ -30,5 +32,9 @@ public class Learner extends AbstractActor {
         LOGGER.info("Received value to learn: " + l.getValue());
         learnedConsumer.accept(l.getValue());
         LOGGER.info("Learned.");
+    }
+
+    public static Learner getInstance() {
+        return instance;
     }
 }

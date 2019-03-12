@@ -1,6 +1,7 @@
 package it.polimi.distsys.paxos.protocol;
 
 import it.polimi.distsys.paxos.protocol.actors.Acceptor;
+import it.polimi.distsys.paxos.protocol.actors.Elector;
 import it.polimi.distsys.paxos.protocol.actors.Learner;
 import it.polimi.distsys.paxos.protocol.actors.Proposer;
 import it.polimi.distsys.paxos.communication.Receiver;
@@ -19,6 +20,7 @@ public class Node {
     private Proposer proposer;
     private Acceptor acceptor;
     private Learner learner;
+    private Elector elector;
 
     //Network level
     private Dispatcher dispatcher;
@@ -40,9 +42,10 @@ public class Node {
         this.proposer = new Proposer(this.forwarder, this.dispatcher.getProposerConsumer());
         this.acceptor = new Acceptor(this.forwarder, this.dispatcher.getAcceptorConsumer());
         this.learner = new Learner(this.forwarder, this.dispatcher.getLearnerConsumer(), learnedConsumer);
+        this.elector = new Elector(this.forwarder, this.dispatcher.getElectorConsumer());
     }
 
     public void propose(ProposalValue value) {
-        this.forwarder.broadcast(new Propose(value));
+        this.forwarder.send(new Propose(value), Elector.getLeaderId());
     }
 }

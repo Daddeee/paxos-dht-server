@@ -8,11 +8,9 @@ import it.polimi.distsys.paxos.utils.QueueConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-//TODO: se falliscono x accettori la quota per il quorum cambia, così però non posso saperlo perchè
-//TODO: ora salvo il numero all'inizio... fix !!
 public class Proposer extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Proposer.class);
+    private static Proposer instance;
     private int numAcceptors;
     private ProposalNumber currentProposalNumber;
     private ProposalValue currentProposalValue;
@@ -28,6 +26,15 @@ public class Proposer extends AbstractActor {
         this.numAcceptors = this.forwarder.getNumReceivers();
         this.receivedAccept = 0;
         this.quorumReached = false;
+        instance = this;
+    }
+
+    public ProposalNumber getCurrentProposalNumber() {
+        return currentProposalNumber;
+    }
+
+    public void setCurrentProposalNumber(final ProposalNumber currentProposalNumber) {
+        this.currentProposalNumber = currentProposalNumber;
     }
 
     @Override
@@ -40,6 +47,13 @@ public class Proposer extends AbstractActor {
     }
 
     private void onPropose(Propose p) {
+        if(Elector.iAmTheLeader())
+            handleProposal(p);
+        else
+            this.forwarder.send(p, Elector.getLeaderId());
+    }
+
+    private void handleProposal(Propose p) {
         this.currentProposalNumber = new ProposalNumber(this.currentProposalNumber.getProposalId() + 1);
         this.currentProposalValue = p.getValue();
         this.currentReceivedValue = null;
@@ -54,7 +68,7 @@ public class Proposer extends AbstractActor {
     private void onPromise(Promise p) {
         LOGGER.info("Received promise " + p.getPromisedNumber().getProposalId() + ":" + p.getPromisedNumber().getProposerId() +
                     " from " + p.getFrom());
-        if(p.getPromisedNumber().compareTo(currentProposalNumber) != 0 || this.quorumReached) {
+        if(p.getPromisedNumber().compareTo(currentProposalNumber) < 0 || this.quorumReached) {
             LOGGER.info((quorumReached ? "Quorum already reached" : "Too old") + ", discarded.");
             return;
         }
@@ -71,5 +85,9 @@ public class Proposer extends AbstractActor {
             this.forwarder.broadcast(new Accept(this.currentProposalNumber, this.currentProposalValue));
             LOGGER.info("Done.");
         }
+    }
+
+    public static Proposer getInstance() {
+        return instance;
     }
 }

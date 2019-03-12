@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 public class Acceptor extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Acceptor.class);
+    private static Acceptor instance;
     private ProposalNumber promisedProposalNumber;
     private ProposalNumber lastAcceptedProposalNumber;
     private ProposalValue lastAcceptedProposalValue;
@@ -19,6 +20,7 @@ public class Acceptor extends AbstractActor {
         this.promisedProposalNumber = new ProposalNumber(0);
         this.lastAcceptedProposalNumber = null;
         this.lastAcceptedProposalValue = null;
+        instance = this;
     }
 
     @Override
@@ -39,7 +41,6 @@ public class Acceptor extends AbstractActor {
             this.forwarder.send(pr, p.getFrom());
             LOGGER.info("Done.");
         }
-        //TODO nack optimization (?)
     }
 
     private void onAccept(Accept a) {
@@ -52,5 +53,9 @@ public class Acceptor extends AbstractActor {
             this.forwarder.broadcast(new Learn(a.getProposalValue()));
             LOGGER.info("Done");
         }
+    }
+
+    public static Acceptor getInstance() {
+        return instance;
     }
 }
