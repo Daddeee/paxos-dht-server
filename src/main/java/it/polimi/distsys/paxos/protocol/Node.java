@@ -10,6 +10,8 @@ import it.polimi.distsys.paxos.network.Dispatcher;
 import it.polimi.distsys.paxos.network.Forwarder;
 import it.polimi.distsys.paxos.protocol.messages.Propose;
 import it.polimi.distsys.paxos.utils.NodeRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class Node {
+    private static final Logger LOGGER = LoggerFactory.getLogger(Node.class);
     //Actor level
     private Proposer proposer;
     private Acceptor acceptor;
@@ -44,6 +47,7 @@ public class Node {
         this.acceptor = new Acceptor(this.forwarder, this.dispatcher.getAcceptorConsumer());
         this.learner = new Learner(this.forwarder, this.dispatcher.getLearnerConsumer(), learnedConsumer);
         this.elector = new Elector(this.forwarder, this.dispatcher.getElectorConsumer());
+        LOGGER.info("NODE " + NodeRef.getSelf().getId() + " UP AND RUNNING");
     }
 
     public void propose(ProposalValue value) {

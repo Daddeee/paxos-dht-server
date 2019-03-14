@@ -11,7 +11,7 @@ public class NodeRef implements Serializable {
     public NodeRef(final String ip, final int port) {
         this.ip = ip;
         this.port = port;
-        this.id = (ip + port).hashCode();
+        this.id = (port + ip).hashCode();
     }
 
     public String getIp() {
