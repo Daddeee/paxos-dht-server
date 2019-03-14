@@ -59,28 +59,31 @@ public class Dispatcher {
 
         switch (message.getType()) {
             case PROPOSE:
-                this.proposerQueueProducer.produce((Propose) message.getBody());
-                break;
+            this.proposerQueueProducer.produce((Propose) message.getBody());
+            break;
             case PREPARE:
-                this.acceptorQueueProducer.produce((Prepare) message.getBody());
-                break;
+            this.acceptorQueueProducer.produce((Prepare) message.getBody());
+            break;
             case PROMISE:
-                this.proposerQueueProducer.produce((Promise) message.getBody());
-                break;
+            this.proposerQueueProducer.produce((Promise) message.getBody());
+            break;
             case ACCEPT:
-                this.acceptorQueueProducer.produce((Accept) message.getBody());
-                break;
+            this.acceptorQueueProducer.produce((Accept) message.getBody());
+            break;
+            case ACCEPTED:
+            this.proposerQueueProducer.produce((Accepted) message.getBody());
+            break;
             case LEARN:
-                this.learnerQueueProducer.produce((Learn) message.getBody());
-                break;
+            this.learnerQueueProducer.produce((Learn) message.getBody());
+            break;
             case ELECTION:
-                this.electorQueueProducer.produce((Election) message.getBody());
-                break;
+            this.electorQueueProducer.produce((Election) message.getBody());
+            break;
             case HEARTBEAT:
-                this.electorQueueProducer.produce((HeartBeat) message.getBody());
-                break;
+            this.electorQueueProducer.produce((HeartBeat) message.getBody());
+            break;
             default:
-                LOGGER.error("Unrecognized message");
+            LOGGER.error("Unrecognized message");
         }
     }
 }

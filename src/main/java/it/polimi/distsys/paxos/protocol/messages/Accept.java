@@ -5,22 +5,23 @@ import it.polimi.distsys.paxos.protocol.ProposalValue;
 import it.polimi.distsys.paxos.utils.NodeRef;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Accept extends ProtocolMessage implements Serializable {
     private ProposalNumber proposalNumber;
-    private ProposalValue proposalValue;
+    private List<ProposalValue> proposalSequence;
 
-    public Accept(final ProposalNumber proposalNumber, final ProposalValue proposalValue) {
+    public Accept(final ProposalNumber proposalNumber, final List<ProposalValue> proposalSequence) {
         super(NodeRef.getSelf().getId());
         this.proposalNumber = proposalNumber;
-        this.proposalValue = proposalValue;
+        this.proposalSequence = proposalSequence;
     }
 
     public ProposalNumber getProposalNumber() {
         return proposalNumber;
     }
 
-    public ProposalValue getProposalValue() {
-        return proposalValue;
+    public List<ProposalValue> getProposalSequence() {
+        return proposalSequence;
     }
 }

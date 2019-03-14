@@ -18,7 +18,7 @@ public class Main {
 
         String self = args.length > 0 ? args[0] : null;
         if(self == null) throw new RuntimeException("Need to specify the node you are running as an argument.");
-        Node node = new Node(Integer.parseInt(self), receivers, pv -> System.out.println(pv));
+        Node node = new Node(Integer.parseInt(self), receivers, proposalValues -> proposalValues.forEach(System.out::println));
 
         Scanner s = new Scanner(System.in);
         while (true) {
@@ -52,13 +52,6 @@ public class Main {
 
         public MyString(String s) {
             this.s = s;
-        }
-
-        @Override
-        public int compareTo(final ProposalValue proposalValue) {
-            if(proposalValue == null) return 1;
-            if(proposalValue instanceof MyString) return s.compareTo(((MyString) proposalValue).s);
-            else return -1;
         }
 
         @Override

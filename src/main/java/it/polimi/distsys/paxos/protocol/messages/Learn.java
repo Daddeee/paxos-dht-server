@@ -4,16 +4,17 @@ import it.polimi.distsys.paxos.protocol.ProposalValue;
 import it.polimi.distsys.paxos.utils.NodeRef;
 
 import java.io.Serializable;
+import java.util.List;
 
 public class Learn extends ProtocolMessage implements Serializable {
-    private ProposalValue value;
+    private List<ProposalValue> sequence;
 
-    public Learn(final ProposalValue value) {
+    public Learn(final List<ProposalValue> sequence) {
         super(NodeRef.getSelf().getId());
-        this.value = value;
+        this.sequence = sequence;
     }
 
-    public ProposalValue getValue() {
-        return value;
+    public List<ProposalValue> getSequence() {
+        return sequence;
     }
 }

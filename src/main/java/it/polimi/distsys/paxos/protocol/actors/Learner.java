@@ -8,16 +8,20 @@ import it.polimi.distsys.paxos.utils.QueueConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class Learner extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Learner.class);
     private static Learner instance;
-    private Consumer<ProposalValue> learnedConsumer;
+    private List<ProposalValue> learnedSequence;
+    private Consumer<List<ProposalValue>> learnedConsumer;
 
-    public Learner(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<ProposalValue> learnedConsumer) {
+    public Learner(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<List<ProposalValue>> learnedConsumer) {
         super(forwarder, consumer);
         this.learnedConsumer = learnedConsumer;
+        this.learnedSequence = new ArrayList<>();
         instance = this;
     }
 
@@ -29,9 +33,12 @@ public class Learner extends AbstractActor {
     }
 
     private void onLearn(Learn l) {
-        LOGGER.info("Received value to learn: " + l.getValue());
-        learnedConsumer.accept(l.getValue());
-        LOGGER.info("Learned.");
+        LOGGER.info("Received sequence to learn, length: " + l.getSequence().size());
+        if(l.getSequence().size() > learnedSequence.size()) {
+            this.learnedSequence = l.getSequence();
+            learnedConsumer.accept(l.getSequence());
+            LOGGER.info("Learned.");
+        }
     }
 
     public static Learner getInstance() {

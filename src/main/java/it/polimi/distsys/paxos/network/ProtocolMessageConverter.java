@@ -18,6 +18,7 @@ public class ProtocolMessageConverter {
         else if(p instanceof Learn) return NetworkMessageType.LEARN;
         else if(p instanceof Election) return NetworkMessageType.ELECTION;
         else if(p instanceof HeartBeat) return NetworkMessageType.HEARTBEAT;
+        else if(p instanceof Accepted) return NetworkMessageType.ACCEPTED;
         else return NetworkMessageType.ACCEPT;
     }
 }
