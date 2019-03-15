@@ -12,18 +12,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class Forwarder {
     private Map<Integer, NodeRef> receivers;
     private QueueProducer<CommunicationMessage> sendProducer;
 
-    public Forwarder(Sender sender) {
+    public Forwarder(Sender sender, NodeRef[] all) {
         this.receivers = new ConcurrentHashMap<>();
+        Arrays.stream(all).forEach(n -> receivers.put(n.getId(), n));
         this.sendProducer = sender.getSendProducer();
-    }
-
-    public void putNode(NodeRef nodeRef) {
-        this.receivers.put(nodeRef.getId(), nodeRef);
     }
 
     public int getNumReceivers() {
@@ -31,7 +29,7 @@ public class Forwarder {
     }
 
     public List<Integer> getReceiversIds() {
-        return new ArrayList<>(receivers.keySet());
+        return receivers.keySet().stream().sorted().collect(Collectors.toList());
     }
 
     public void send(ProtocolMessage m, int toId) {

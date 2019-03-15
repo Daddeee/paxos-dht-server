@@ -3,5 +3,5 @@ package it.polimi.distsys.paxos.network.messages;
 import java.io.Serializable;
 
 public enum NetworkMessageType implements Serializable {
-    PROPOSE, PREPARE, PROMISE, ACCEPT, ACCEPTED, LEARN, ELECTION, HEARTBEAT
+    PROPOSE, PREPARE, PROMISE, ACCEPT, ACCEPTED, LEARN, HEARTBEAT
 }

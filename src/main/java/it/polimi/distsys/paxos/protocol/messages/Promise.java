@@ -8,11 +8,11 @@ import java.io.Serializable;
 import java.util.List;
 
 public class Promise extends ProtocolMessage implements Serializable {
+    private ProposalNumber promisedNumber;
     private ProposalNumber lastAcceptedNumber;
     private List<ProposalValue> lastAcceptedSequence;
-    private ProposalNumber promisedNumber;
 
-    public Promise(final ProposalNumber lastAcceptedNumber, final List<ProposalValue> lastAcceptedSequence, final ProposalNumber promisedNumber) {
+    public Promise(final ProposalNumber promisedNumber, final ProposalNumber lastAcceptedNumber, final List<ProposalValue> lastAcceptedSequence) {
         super(NodeRef.getSelf().getId());
         this.lastAcceptedNumber = lastAcceptedNumber;
         this.lastAcceptedSequence = lastAcceptedSequence;

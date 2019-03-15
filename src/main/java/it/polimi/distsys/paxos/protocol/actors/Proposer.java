@@ -8,36 +8,42 @@ import it.polimi.distsys.paxos.utils.QueueConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 public class Proposer extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Proposer.class);
     private static Proposer instance;
-    private int numAcceptors;
-    private ProposalNumber currentProposalNumber;
-    private ProposalValue currentProposalValue;
-    private List<ProposalValue> currentReceivedSequence;
-    private int receivedPromises;
-    private int receivedAccepted;
+
+    private boolean firstProposal;
+    private ProposalNumber nc;
+    private List<ProposalValue> vc;
+    private ProposalNumber ns;
+    private List<ProposalValue> vs;
+    private int s;
+    private Map<Integer, Integer> a;
+    private int lc;
+    private int quorum;
+    private ProposalValue c;
 
     public Proposer(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer) {
         super(forwarder, consumer);
-        this.currentProposalNumber = new ProposalNumber(0);
-        this.currentProposalValue = null;
-        this.currentReceivedSequence = new ArrayList<>();
-        this.numAcceptors = this.forwarder.getNumReceivers();
-        this.receivedPromises = 0;
-        this.receivedAccepted = 0;
+        this.firstProposal = true;
+        this.nc = new ProposalNumber(0);
+        this.vc = new ArrayList<>();
+        this.a  = new HashMap<>();
+        this.lc = 0;
+        this.s = 0;
+        this.quorum = forwarder.getNumReceivers() / 2;
         instance = this;
     }
 
-    public ProposalNumber getCurrentProposalNumber() {
-        return currentProposalNumber;
+    public void setCurrentProposalNumber(ProposalNumber nc) {
+        this.nc = nc;
     }
 
-    public void setCurrentProposalNumber(final ProposalNumber currentProposalNumber) {
-        this.currentProposalNumber = currentProposalNumber;
+    public ProposalNumber getCurrentProposalNumber() {
+        return this.nc;
     }
 
     @Override
@@ -52,55 +58,98 @@ public class Proposer extends AbstractActor {
     }
 
     private void onPropose(Propose p) {
-        if(Elector.iAmTheLeader())
-            handleProposal(p);
-        else
-            this.forwarder.send(p, Elector.getLeaderId());
+        LOGGER.info("Received propose : " + p.getValue());
+        if(Elector.getInstance().iAmTheLeader()) {
+            LOGGER.info("I'm the leader, handling it.");
+            handlePropose(p);
+        } else {
+            LOGGER.info("I'm not the leader, delegating.");
+            forwardToLeader(p);
+        }
     }
 
-    private void handleProposal(Propose p) {
-        this.currentProposalNumber = new ProposalNumber(this.currentProposalNumber.getProposalId() + 1);
-        this.currentProposalValue = p.getValue();
-        this.currentReceivedSequence = new ArrayList<>();
-        this.receivedPromises = 0;
-        this.receivedAccepted = 0;
-        LOGGER.info("Received proposal " + currentProposalNumber.getProposalId() + ":" + currentProposalNumber.getProposerId() + " .");
-        LOGGER.info("Now broadcasting PREPARE.");
-        this.forwarder.broadcast(new Prepare(this.currentProposalNumber));
-        LOGGER.info("Done.");
+    private void handlePropose(Propose p) {
+        if(firstProposal) {
+            LOGGER.info("First proposal, broadcasting prepare.");
+            firstProposal = false;
+            c = p.getValue();
+            nc = nc.inc();
+            reset();
+            forwarder.broadcast(new Prepare(nc));
+        } else {
+            LOGGER.info("Extending previous proposal, broadcasting accept.");
+            c = p.getValue();
+            if(!vc.contains(c)) vc.add(c);
+            forwarder.broadcast(new Accept(nc, vc));
+        }
+    }
+
+    private void reset() {
+        s = 0;
+        resetReceivedLengths();
+        lc = 0;
+        ns = new ProposalNumber(0);
+        vs = new ArrayList<>();
+    }
+
+    private void resetReceivedLengths() {
+        forwarder.getReceiversIds().forEach(id -> a.put(id, 0));
+    }
+
+    private void forwardToLeader(Propose p) {
+        this.forwarder.send(p, Elector.getInstance().getLeaderId());
     }
 
     private void onPromise(Promise p) {
-        LOGGER.info("Received promise " + p.getPromisedNumber().getProposalId() + ":" + p.getPromisedNumber().getProposerId() +
-                    " from " + p.getFrom());
-        if(p.getPromisedNumber().compareTo(currentProposalNumber) != 0 || receivedPromises > numAcceptors/2) {
-            LOGGER.info(((receivedPromises > numAcceptors/2) ? "Quorum already reached" : "Too old") + ", discarded.");
+        LOGGER.info("Received promise from " + p.getFrom() + ".");
+        ProposalNumber n = p.getPromisedNumber();
+        ProposalNumber na = p.getLastAcceptedNumber();
+        List<ProposalValue> va = p.getLastAcceptedSequence();
+
+        if(s > quorum || n.compareTo(nc) != 0) {
+            LOGGER.info("Quorum reached or old proposal. Skipping.");
             return;
         }
-        receivedPromises++;
-        if(currentReceivedSequence.size() < p.getLastAcceptedSequence().size())
-            currentReceivedSequence = p.getLastAcceptedSequence();
-        LOGGER.info("Now received " + receivedPromises + " promises, max value: " + currentReceivedSequence);
-        if(receivedPromises > numAcceptors/2) {
-            LOGGER.info("Quorum reached !! Now broadcasting accept.");
-            if(!currentReceivedSequence.contains(currentProposalValue))
-                currentReceivedSequence.add(currentProposalValue);
-            this.forwarder.broadcast(new Accept(this.currentProposalNumber, this.currentReceivedSequence));
-            LOGGER.info("Done.");
+
+        if(na.compareTo(ns) > 0 || (na.compareTo(ns) == 0 && va.size() > vs.size())) {
+            ns = na;
+            vs = va;
+        }
+
+        s++;
+
+        if(s > quorum) {
+            LOGGER.info("Reached quorum! Broadcasting Accept.");
+            vc = vs;
+            if(!vc.contains(c))
+                vc.add(c);
+            forwarder.broadcast(new Accept(nc, vc));
         }
     }
 
-    private void onAccepted(Accepted a) {
-        LOGGER.info("Received accepted " + a.getAcceptedProposalNumber().getProposalId() + ":"
-                + a.getAcceptedProposalNumber().getProposerId() + " from " + a.getFrom());
-        if(a.getAcceptedProposalNumber().compareTo(currentProposalNumber) != 0 || receivedAccepted > numAcceptors/2) {
-            LOGGER.info(((receivedAccepted > numAcceptors/2) ? "Quorum already reached" : "Too old") + ", discarded.");
+    private void onAccepted(Accepted acc) {
+        LOGGER.info("Received accepted from " + acc.getFrom() + ".");
+        ProposalNumber n = acc.getAcceptedProposalNumber();
+        List<ProposalValue> v = acc.getAcceptedSequence();
+
+        if(n.compareTo(nc) != 0) {
+            LOGGER.info("Old accepted. Skipping.");
             return;
         }
 
-        receivedAccepted++;
-        if(receivedAccepted > numAcceptors/2)
-            this.forwarder.broadcast(new Learn(currentReceivedSequence));
+        if(a.get(acc.getFrom()) < v.size())
+            a.put(acc.getFrom(), v.size());
+
+        if(lc < v.size() && isSupported(v.size())) {
+            lc = v.size();
+            LOGGER.info("Supported sequence, broadcasting Learn.");
+            forwarder.broadcast(new Learn(v));
+        }
+    }
+
+    private boolean isSupported(int v) {
+        long greater = a.values().stream().filter(val -> val >= v).count();
+        return greater > quorum;
     }
 
     public static Proposer getInstance() {

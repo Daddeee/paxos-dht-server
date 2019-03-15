@@ -76,9 +76,6 @@ public class Dispatcher {
             case LEARN:
             this.learnerQueueProducer.produce((Learn) message.getBody());
             break;
-            case ELECTION:
-            this.electorQueueProducer.produce((Election) message.getBody());
-            break;
             case HEARTBEAT:
             this.electorQueueProducer.produce((HeartBeat) message.getBody());
             break;

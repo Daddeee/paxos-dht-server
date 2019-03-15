@@ -15,14 +15,20 @@ import java.util.function.Consumer;
 public class Learner extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Learner.class);
     private static Learner instance;
-    private List<ProposalValue> learnedSequence;
+
+    private List<ProposalValue> vd;
     private Consumer<List<ProposalValue>> learnedConsumer;
 
     public Learner(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<List<ProposalValue>> learnedConsumer) {
         super(forwarder, consumer);
         this.learnedConsumer = learnedConsumer;
-        this.learnedSequence = new ArrayList<>();
+        this.vd = new ArrayList<>();
+
         instance = this;
+    }
+
+    public List<ProposalValue> getDecidedSequence() {
+        return vd;
     }
 
     @Override
@@ -34,9 +40,10 @@ public class Learner extends AbstractActor {
 
     private void onLearn(Learn l) {
         LOGGER.info("Received sequence to learn, length: " + l.getSequence().size());
-        if(l.getSequence().size() > learnedSequence.size()) {
-            this.learnedSequence = l.getSequence();
-            learnedConsumer.accept(l.getSequence());
+        List<ProposalValue> v = l.getSequence();
+        if (v.size() > vd.size()) {
+            this.vd = v;
+            learnedConsumer.accept(v);
             LOGGER.info("Learned.");
         }
     }

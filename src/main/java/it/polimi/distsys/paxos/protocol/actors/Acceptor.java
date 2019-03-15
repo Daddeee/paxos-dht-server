@@ -14,15 +14,16 @@ import java.util.List;
 public class Acceptor extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Acceptor.class);
     private static Acceptor instance;
-    private ProposalNumber promisedProposalNumber;
-    private ProposalNumber lastAcceptedProposalNumber;
-    private List<ProposalValue> lastAcceptedSequence;
+
+    private ProposalNumber np;
+    private ProposalNumber na;
+    private List<ProposalValue> va;
 
     public Acceptor(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer) {
         super(forwarder, consumer);
-        this.promisedProposalNumber = new ProposalNumber(0);
-        this.lastAcceptedProposalNumber = null;
-        this.lastAcceptedSequence = new ArrayList<>();
+        this.np = new ProposalNumber(0);
+        this.na = new ProposalNumber(0);
+        this.va = new ArrayList<>();
         instance = this;
     }
 
@@ -36,26 +37,35 @@ public class Acceptor extends AbstractActor {
     }
 
     private void onPrepare(Prepare p) {
-        LOGGER.info("Received PREPARE " + p.getProposalNumber().getProposalId() + ":" + p.getProposalNumber().getProposerId());
-        if(p.getProposalNumber().compareTo(this.promisedProposalNumber) > 0) {
-            this.promisedProposalNumber = p.getProposalNumber();
-            Promise pr = new Promise(this.lastAcceptedProposalNumber, this.lastAcceptedSequence, this.promisedProposalNumber);
-            LOGGER.info("PREPARE is for a new proposal, sending back Promise.");
-            this.forwarder.send(pr, p.getFrom());
-            LOGGER.info("Done.");
+        LOGGER.info("Received prepare " + p.getProposalNumber().getProposalId() + ":" + p.getProposalNumber().getProposerId());
+        ProposalNumber n = p.getProposalNumber();
+
+        if(np.compareTo(n) < 0) {
+            LOGGER.info("This is a new prepare. Promising.");
+            np = n;
+            forwarder.send(new Promise(np, na, va), p.getFrom());
         }
     }
 
     private void onAccept(Accept a) {
-        LOGGER.info("Received ACCEPT (" + a.getProposalNumber().getProposalId() + ":" + a.getProposalNumber().getProposerId() + ", " + a.getProposalSequence() + ")");
-        if(a.getProposalNumber().compareTo(this.promisedProposalNumber) == 0) {
-            LOGGER.info("Proposal is good, accepting it and broadcasting to learners.");
-            this.promisedProposalNumber = a.getProposalNumber();
-            this.lastAcceptedProposalNumber = a.getProposalNumber();
-            this.lastAcceptedSequence = a.getProposalSequence();
-            this.forwarder.send(new Accepted(a.getProposalNumber()), a.getFrom());
-            LOGGER.info("Done");
+        LOGGER.info("Received Accept " + a.getProposalNumber().getProposalId() + ":" + a.getProposalNumber().getProposerId());
+        ProposalNumber n = a.getProposalNumber();
+        List<ProposalValue> v = a.getProposalSequence();
+
+        if(np.compareTo(n) <= 0) {
+            LOGGER.info("Accepting same proposal as what i promised.");
+            np = n;
+            if(n.compareTo(na) > 0 || (n.compareTo(na) == 0 && v.size() > va.size())) {
+                na = n;
+                va = v;
+            }
+            LOGGER.info("Sending Accepted to Proposer.");
+            forwarder.send(new Accepted(n, va), a.getFrom());
         }
+    }
+
+    public ProposalNumber getPromised() {
+        return np;
     }
 
     public static Acceptor getInstance() {

@@ -40,8 +40,7 @@ public class Node {
         this.sender = new Sender();
 
         this.dispatcher = new Dispatcher(this.receiver);
-        this.forwarder = new Forwarder(this.sender);
-        Arrays.stream(all).forEach(nodeRef -> this.forwarder.putNode(nodeRef));
+        this.forwarder = new Forwarder(this.sender, all);
 
         this.proposer = new Proposer(this.forwarder, this.dispatcher.getProposerConsumer());
         this.acceptor = new Acceptor(this.forwarder, this.dispatcher.getAcceptorConsumer());
@@ -51,6 +50,6 @@ public class Node {
     }
 
     public void propose(ProposalValue value) {
-        this.forwarder.send(new Propose(value), Elector.getLeaderId());
+        this.forwarder.send(new Propose(value), Elector.getInstance().getLeaderId());
     }
 }

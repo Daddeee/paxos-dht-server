@@ -27,4 +27,8 @@ public class ProposalNumber implements Serializable, Comparable<ProposalNumber> 
         if(first != 0) return first;
         return this.proposerId.compareTo(proposalNumber.getProposerId());
     }
+
+    public ProposalNumber inc() {
+        return new ProposalNumber(proposalId + 1);
+    }
 }
