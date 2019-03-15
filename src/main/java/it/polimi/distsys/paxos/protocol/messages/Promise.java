@@ -10,12 +10,12 @@ import java.util.List;
 public class Promise extends ProtocolMessage implements Serializable {
     private ProposalNumber promisedNumber;
     private ProposalNumber lastAcceptedNumber;
-    private List<ProposalValue> lastAcceptedSequence;
+    private List<ProposalValue> lastAcceptedSuffix;
 
-    public Promise(final ProposalNumber promisedNumber, final ProposalNumber lastAcceptedNumber, final List<ProposalValue> lastAcceptedSequence) {
+    public Promise(final ProposalNumber promisedNumber, final ProposalNumber lastAcceptedNumber, final List<ProposalValue> lastAcceptedSuffix) {
         super(NodeRef.getSelf().getId());
         this.lastAcceptedNumber = lastAcceptedNumber;
-        this.lastAcceptedSequence = lastAcceptedSequence;
+        this.lastAcceptedSuffix = lastAcceptedSuffix;
         this.promisedNumber = promisedNumber;
     }
 
@@ -23,8 +23,8 @@ public class Promise extends ProtocolMessage implements Serializable {
         return lastAcceptedNumber;
     }
 
-    public List<ProposalValue> getLastAcceptedSequence() {
-        return lastAcceptedSequence;
+    public List<ProposalValue> getLastAcceptedSuffix() {
+        return lastAcceptedSuffix;
     }
 
     public ProposalNumber getPromisedNumber() {

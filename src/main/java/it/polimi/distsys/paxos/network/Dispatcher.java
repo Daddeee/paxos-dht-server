@@ -73,8 +73,8 @@ public class Dispatcher {
             case ACCEPTED:
             this.proposerQueueProducer.produce((Accepted) message.getBody());
             break;
-            case LEARN:
-            this.learnerQueueProducer.produce((Learn) message.getBody());
+            case DECIDE:
+            this.learnerQueueProducer.produce((Decide) message.getBody());
             break;
             case HEARTBEAT:
             this.electorQueueProducer.produce((HeartBeat) message.getBody());

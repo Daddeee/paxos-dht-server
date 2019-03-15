@@ -74,8 +74,9 @@ public class Proposer extends AbstractActor {
             firstProposal = false;
             c = p.getValue();
             nc = nc.inc();
+            vc = Learner.getInstance().getDecidedSequence();
             reset();
-            forwarder.broadcast(new Prepare(nc));
+            forwarder.broadcast(new Prepare(nc, vc.size()));
         } else {
             LOGGER.info("Extending previous proposal, broadcasting accept.");
             c = p.getValue();
@@ -104,7 +105,7 @@ public class Proposer extends AbstractActor {
         LOGGER.info("Received promise from " + p.getFrom() + ".");
         ProposalNumber n = p.getPromisedNumber();
         ProposalNumber na = p.getLastAcceptedNumber();
-        List<ProposalValue> va = p.getLastAcceptedSequence();
+        List<ProposalValue> va = p.getLastAcceptedSuffix();
 
         if(s > quorum || n.compareTo(nc) != 0) {
             LOGGER.info("Quorum reached or old proposal. Skipping.");
@@ -120,7 +121,7 @@ public class Proposer extends AbstractActor {
 
         if(s > quorum) {
             LOGGER.info("Reached quorum! Broadcasting Accept.");
-            vc = vs;
+            vc.addAll(vs);
             if(!vc.contains(c))
                 vc.add(c);
             forwarder.broadcast(new Accept(nc, vc));
@@ -130,25 +131,25 @@ public class Proposer extends AbstractActor {
     private void onAccepted(Accepted acc) {
         LOGGER.info("Received accepted from " + acc.getFrom() + ".");
         ProposalNumber n = acc.getAcceptedProposalNumber();
-        List<ProposalValue> v = acc.getAcceptedSequence();
+        int l = acc.getAcceptedLength();
 
         if(n.compareTo(nc) != 0) {
             LOGGER.info("Old accepted. Skipping.");
             return;
         }
 
-        if(a.get(acc.getFrom()) < v.size())
-            a.put(acc.getFrom(), v.size());
+        if(a.get(acc.getFrom()) < l)
+            a.put(acc.getFrom(), l);
 
-        if(lc < v.size() && isSupported(v.size())) {
-            lc = v.size();
-            LOGGER.info("Supported sequence, broadcasting Learn.");
-            forwarder.broadcast(new Learn(v));
+        if(lc < l && isSupported(l)) {
+            lc = l;
+            LOGGER.info("Supported sequence, broadcasting Decide.");
+            forwarder.broadcast(new Decide(nc, lc));
         }
     }
 
-    private boolean isSupported(int v) {
-        long greater = a.values().stream().filter(val -> val >= v).count();
+    private boolean isSupported(int l) {
+        long greater = a.values().stream().filter(val -> val >= l).count();
         return greater > quorum;
     }
 

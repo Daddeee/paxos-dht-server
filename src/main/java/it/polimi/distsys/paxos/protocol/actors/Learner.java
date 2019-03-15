@@ -1,8 +1,9 @@
 package it.polimi.distsys.paxos.protocol.actors;
 
 import it.polimi.distsys.paxos.network.Forwarder;
+import it.polimi.distsys.paxos.protocol.ProposalNumber;
 import it.polimi.distsys.paxos.protocol.ProposalValue;
-import it.polimi.distsys.paxos.protocol.messages.Learn;
+import it.polimi.distsys.paxos.protocol.messages.Decide;
 import it.polimi.distsys.paxos.protocol.messages.ProtocolMessage;
 import it.polimi.distsys.paxos.utils.QueueConsumer;
 import org.slf4j.Logger;
@@ -33,17 +34,22 @@ public class Learner extends AbstractActor {
 
     @Override
     public void handle(final ProtocolMessage m) {
-        if(m instanceof Learn)
-            this.onLearn((Learn) m);
+        if(m instanceof Decide)
+            this.onDecide((Decide) m);
         else throw new RuntimeException("Unrecognized message");
     }
 
-    private void onLearn(Learn l) {
-        LOGGER.info("Received sequence to learn, length: " + l.getSequence().size());
-        List<ProposalValue> v = l.getSequence();
-        if (v.size() > vd.size()) {
-            this.vd = v;
-            learnedConsumer.accept(v);
+    private void onDecide(Decide d) {
+        LOGGER.info("Received sequence to learn, length: " + d.getLength());
+        ProposalNumber n = d.getCurrent();
+        ProposalNumber np = Acceptor.getInstance().getPromised();
+        int l = d.getLength();
+        List<ProposalValue> va = Acceptor.getInstance().getAcceptedSequence();
+
+
+        if (np.compareTo(n) == 0 && vd.size() <= l) {
+            vd = new ArrayList<>(va.subList(0, l));
+            learnedConsumer.accept(vd);
             LOGGER.info("Learned.");
         }
     }

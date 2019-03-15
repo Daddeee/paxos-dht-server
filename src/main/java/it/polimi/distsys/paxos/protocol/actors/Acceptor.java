@@ -43,7 +43,8 @@ public class Acceptor extends AbstractActor {
         if(np.compareTo(n) < 0) {
             LOGGER.info("This is a new prepare. Promising.");
             np = n;
-            forwarder.send(new Promise(np, na, va), p.getFrom());
+            List<ProposalValue> suffix = new ArrayList<>(va.subList(p.getSequenceLength(), va.size()));
+            forwarder.send(new Promise(np, na, suffix), p.getFrom());
         }
     }
 
@@ -60,12 +61,16 @@ public class Acceptor extends AbstractActor {
                 va = v;
             }
             LOGGER.info("Sending Accepted to Proposer.");
-            forwarder.send(new Accepted(n, va), a.getFrom());
+            forwarder.send(new Accepted(n, va.size()), a.getFrom());
         }
     }
 
     public ProposalNumber getPromised() {
         return np;
+    }
+
+    public List<ProposalValue> getAcceptedSequence() {
+        return va;
     }
 
     public static Acceptor getInstance() {

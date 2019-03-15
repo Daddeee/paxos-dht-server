@@ -9,19 +9,19 @@ import java.util.List;
 
 public class Accepted extends ProtocolMessage implements Serializable {
     private ProposalNumber acceptedProposalNumber;
-    private List<ProposalValue> acceptedSequence;
+    private int acceptedLength;
 
-    public Accepted(ProposalNumber acceptedProposalNumber, List<ProposalValue> acceptedSequence) {
+    public Accepted(ProposalNumber acceptedProposalNumber, int acceptedLength) {
         super(NodeRef.getSelf().getId());
         this.acceptedProposalNumber = acceptedProposalNumber;
-        this.acceptedSequence = acceptedSequence;
+        this.acceptedLength = acceptedLength;
     }
 
     public ProposalNumber getAcceptedProposalNumber() {
         return acceptedProposalNumber;
     }
 
-    public List<ProposalValue> getAcceptedSequence() {
-        return acceptedSequence;
+    public int getAcceptedLength() {
+        return acceptedLength;
     }
 }

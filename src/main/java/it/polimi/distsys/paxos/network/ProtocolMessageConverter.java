@@ -15,7 +15,7 @@ public class ProtocolMessageConverter {
         if(p instanceof Propose) return NetworkMessageType.PROPOSE;
         else if(p instanceof Promise) return NetworkMessageType.PROMISE;
         else if(p instanceof Prepare) return NetworkMessageType.PREPARE;
-        else if(p instanceof Learn) return NetworkMessageType.LEARN;
+        else if(p instanceof Decide) return NetworkMessageType.DECIDE;
         else if(p instanceof HeartBeat) return NetworkMessageType.HEARTBEAT;
         else if(p instanceof Accepted) return NetworkMessageType.ACCEPTED;
         else return NetworkMessageType.ACCEPT;
