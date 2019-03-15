@@ -66,10 +66,10 @@ public class Elector extends AbstractActor {
 
     private void checkLeader() {
         if(this.hasBeated) {
-            LOGGER.info("Checking leader: all good there.");
+            //LOGGER.info("Checking leader: all good there.");
             this.hasBeated = false;
         } else {
-            LOGGER.info("Uh oh, the leader might have failed. I can be the next leader.");
+            //LOGGER.info("Uh oh, the leader might have failed. I can be the next leader.");
             leaderId = NodeRef.getSelf().getId();
         }
     }

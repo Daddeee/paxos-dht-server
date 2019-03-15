@@ -9,7 +9,6 @@ import it.polimi.distsys.paxos.utils.QueueConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -17,19 +16,19 @@ public class Learner extends AbstractActor {
     private static final Logger LOGGER = LoggerFactory.getLogger(Learner.class);
     private static Learner instance;
 
-    private List<ProposalValue> vd;
-    private Consumer<List<ProposalValue>> learnedConsumer;
+    private int ld;
+    private Consumer<ProposalValue> decisionConsumer;
 
-    public Learner(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<List<ProposalValue>> learnedConsumer) {
+    public Learner(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<ProposalValue> decisionConsumer) {
         super(forwarder, consumer);
-        this.learnedConsumer = learnedConsumer;
-        this.vd = new ArrayList<>();
+        this.decisionConsumer = decisionConsumer;
+        this.ld = 0;
 
         instance = this;
     }
 
-    public List<ProposalValue> getDecidedSequence() {
-        return vd;
+    public int getDecidedSequenceLength() {
+        return ld;
     }
 
     @Override
@@ -47,9 +46,11 @@ public class Learner extends AbstractActor {
         List<ProposalValue> va = Acceptor.getInstance().getAcceptedSequence();
 
 
-        if (np.compareTo(n) == 0 && vd.size() <= l) {
-            vd = new ArrayList<>(va.subList(0, l));
-            learnedConsumer.accept(vd);
+        if (np.compareTo(n) == 0 && ld <= l) {
+            while(ld < l) {
+                decisionConsumer.accept(va.get(ld));
+                ld++;
+            }
             LOGGER.info("Learned.");
         }
     }

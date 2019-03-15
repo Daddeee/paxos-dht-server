@@ -44,22 +44,23 @@ public class Acceptor extends AbstractActor {
             LOGGER.info("This is a new prepare. Promising.");
             np = n;
             List<ProposalValue> suffix = new ArrayList<>(va.subList(p.getSequenceLength(), va.size()));
-            forwarder.send(new Promise(np, na, suffix), p.getFrom());
+            forwarder.send(new Promise(np, na, suffix, Learner.getInstance().getDecidedSequenceLength()), p.getFrom());
         }
     }
 
     private void onAccept(Accept a) {
         LOGGER.info("Received Accept " + a.getProposalNumber().getProposalId() + ":" + a.getProposalNumber().getProposerId());
         ProposalNumber n = a.getProposalNumber();
-        List<ProposalValue> v = a.getProposalSequence();
+        List<ProposalValue> v = a.getProposalSuffix();
+        int offs = a.getOffset();
 
-        if(np.compareTo(n) <= 0) {
+        if(np.compareTo(n) == 0) {
             LOGGER.info("Accepting same proposal as what i promised.");
-            np = n;
-            if(n.compareTo(na) > 0 || (n.compareTo(na) == 0 && v.size() > va.size())) {
-                na = n;
-                va = v;
-            }
+            na = n;
+            if(offs < va.size())
+                va = new ArrayList<>(va.subList(0, offs));
+            va.addAll(v);
+
             LOGGER.info("Sending Accepted to Proposer.");
             forwarder.send(new Accepted(n, va.size()), a.getFrom());
         }

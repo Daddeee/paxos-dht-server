@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 public class Proposer extends AbstractActor {
@@ -20,8 +21,9 @@ public class Proposer extends AbstractActor {
     private List<ProposalValue> vc;
     private ProposalNumber ns;
     private List<ProposalValue> vs;
-    private int s;
+    private int promises;
     private Map<Integer, Integer> a;
+    private Map<Integer, Integer> s;
     private int lc;
     private int quorum;
     private ProposalValue c;
@@ -32,9 +34,10 @@ public class Proposer extends AbstractActor {
         this.nc = new ProposalNumber(0);
         this.vc = new ArrayList<>();
         this.a  = new HashMap<>();
+        this.s = new HashMap<>();
         this.lc = 0;
-        this.s = 0;
-        this.quorum = forwarder.getNumReceivers() / 2;
+        this.promises = 0;
+        this.quorum = forwarder.getNumReceivers()/2 + 1;
         instance = this;
     }
 
@@ -74,19 +77,25 @@ public class Proposer extends AbstractActor {
             firstProposal = false;
             c = p.getValue();
             nc = nc.inc();
-            vc = Learner.getInstance().getDecidedSequence();
+            vc = Acceptor.getInstance().getAcceptedSequence().subList(0, Learner.getInstance().getDecidedSequenceLength());
             reset();
             forwarder.broadcast(new Prepare(nc, vc.size()));
         } else {
             LOGGER.info("Extending previous proposal, broadcasting accept.");
             c = p.getValue();
             if(!vc.contains(c)) vc.add(c);
-            forwarder.broadcast(new Accept(nc, vc));
+            List<Integer> ids = s.keySet().stream().filter(k -> s.get(k) != null).collect(Collectors.toList());
+            ids.forEach(id -> {
+                int t = s.get(id);
+                s.put(id, vc.size());
+                List<ProposalValue> suffix = new ArrayList<>(vc.subList(t, vc.size()));
+                forwarder.send(new Accept(nc, suffix, t), id);
+            });
         }
     }
 
     private void reset() {
-        s = 0;
+        promises = 0;
         resetReceivedLengths();
         lc = 0;
         ns = new ProposalNumber(0);
@@ -94,7 +103,10 @@ public class Proposer extends AbstractActor {
     }
 
     private void resetReceivedLengths() {
-        forwarder.getReceiversIds().forEach(id -> a.put(id, 0));
+        forwarder.getReceiversIds().forEach(id -> {
+            a.put(id, 0);
+            s.put(id, null);
+        });
     }
 
     private void forwardToLeader(Propose p) {
@@ -106,25 +118,41 @@ public class Proposer extends AbstractActor {
         ProposalNumber n = p.getPromisedNumber();
         ProposalNumber na = p.getLastAcceptedNumber();
         List<ProposalValue> va = p.getLastAcceptedSuffix();
+        int l = p.getDecidedLength();
 
-        if(s > quorum || n.compareTo(nc) != 0) {
-            LOGGER.info("Quorum reached or old proposal. Skipping.");
+        if(n.compareTo(nc) != 0) {
+            LOGGER.info("Wrong proposal number. Skipping.");
             return;
         }
+
+        s.put(p.getFrom(), l);
 
         if(na.compareTo(ns) > 0 || (na.compareTo(ns) == 0 && va.size() > vs.size())) {
             ns = na;
             vs = va;
         }
 
-        s++;
+        promises++;
 
-        if(s > quorum) {
+        if(promises == quorum) {
             LOGGER.info("Reached quorum! Broadcasting Accept.");
             vc.addAll(vs);
             if(!vc.contains(c))
                 vc.add(c);
-            forwarder.broadcast(new Accept(nc, vc));
+
+            List<Integer> ids = s.keySet().stream().filter(k -> s.get(k) != null).collect(Collectors.toList());
+            ids.forEach(id -> {
+                int t = s.get(id);
+                s.put(id, vc.size());
+                List<ProposalValue> suffix = new ArrayList<>(vc.subList(t, vc.size()));
+                forwarder.send(new Accept(nc, suffix, t), id);
+            });
+        } else if(promises > quorum) {
+            List<ProposalValue> suffix = new ArrayList<>(vc.subList(l, vc.size()));
+            forwarder.send(new Accept(nc, suffix, l), p.getFrom());
+            s.put(p.getFrom(), vc.size());
+            if(lc != 0)
+                forwarder.send(new Decide(nc, lc), p.getFrom());
         }
     }
 
@@ -150,7 +178,7 @@ public class Proposer extends AbstractActor {
 
     private boolean isSupported(int l) {
         long greater = a.values().stream().filter(val -> val >= l).count();
-        return greater > quorum;
+        return greater >= quorum;
     }
 
     public static Proposer getInstance() {

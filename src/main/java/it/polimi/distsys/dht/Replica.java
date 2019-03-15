@@ -1,30 +1,20 @@
-package it.polimi.distsys.paxos;
+package it.polimi.distsys.dht;
 
 import com.google.gson.Gson;
 import it.polimi.distsys.paxos.protocol.Node;
-import it.polimi.distsys.paxos.protocol.ProposalValue;
 import it.polimi.distsys.paxos.utils.NodeRef;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Scanner;
 
-public class Main {
+public class Replica {
     public static void main(String [] args) throws IOException {
         NodeRef[] receivers = parseNodeRefs();
-
         String self = args.length > 0 ? args[0] : null;
-        if(self == null) throw new RuntimeException("Need to specify the node you are running as an argument.");
-        Node node = new Node(Integer.parseInt(self), receivers, proposalValues -> proposalValues.forEach(System.out::println));
-
-        Scanner s = new Scanner(System.in);
-        while (true) {
-            String cmd = s.nextLine();
-            node.propose(new MyString(cmd));
-        }
+        if(self == null) throw new RuntimeException("Need to specify the replica's number as an argument.");
+        Node node = new Node(Integer.parseInt(self), receivers, System.out::println);
     }
 
     private static NodeRef[] parseNodeRefs() throws IOException {
@@ -45,18 +35,5 @@ public class Main {
     private static class TmpNodeRef {
         public String ip;
         public int port;
-    }
-
-    private static class MyString implements ProposalValue, Serializable {
-        private String s;
-
-        public MyString(String s) {
-            this.s = s;
-        }
-
-        @Override
-        public String toString() {
-            return s;
-        }
     }
 }

@@ -34,7 +34,7 @@ public class Node {
     private Receiver receiver;
     private Sender sender;
 
-    public Node(int selfIndex, NodeRef[] all, Consumer<List<ProposalValue>> learnedConsumer) throws IOException {
+    public Node(int selfIndex, NodeRef[] all, Consumer<ProposalValue> learnedConsumer) throws IOException {
         NodeRef.setSelf(all[selfIndex]);
         this.receiver = new Receiver();
         this.sender = new Sender();
