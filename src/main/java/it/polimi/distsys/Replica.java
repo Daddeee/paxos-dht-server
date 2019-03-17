@@ -1,6 +1,10 @@
-package it.polimi.distsys.dht;
+package it.polimi.distsys;
 
 import com.google.gson.Gson;
+import it.polimi.distsys.dht.State;
+import it.polimi.distsys.dht.common.Get;
+import it.polimi.distsys.dht.common.Put;
+import it.polimi.distsys.dht.common.Remove;
 import it.polimi.distsys.paxos.protocol.Node;
 import it.polimi.distsys.paxos.utils.NodeRef;
 
@@ -8,13 +12,16 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Scanner;
 
 public class Replica {
+    private static Node node;
+
     public static void main(String [] args) throws IOException {
         NodeRef[] receivers = parseNodeRefs();
         String self = args.length > 0 ? args[0] : null;
         if(self == null) throw new RuntimeException("Need to specify the replica's number as an argument.");
-        Node node = new Node(Integer.parseInt(self), receivers, System.out::println);
+        node = new Node(Integer.parseInt(self), receivers);
     }
 
     private static NodeRef[] parseNodeRefs() throws IOException {

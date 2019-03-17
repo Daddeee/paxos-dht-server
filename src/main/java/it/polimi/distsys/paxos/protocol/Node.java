@@ -1,5 +1,6 @@
 package it.polimi.distsys.paxos.protocol;
 
+import it.polimi.distsys.dht.State;
 import it.polimi.distsys.paxos.protocol.actors.Acceptor;
 import it.polimi.distsys.paxos.protocol.actors.Elector;
 import it.polimi.distsys.paxos.protocol.actors.Learner;
@@ -20,6 +21,8 @@ import java.util.function.Consumer;
 
 public class Node {
     private static final Logger LOGGER = LoggerFactory.getLogger(Node.class);
+    //DHT level
+    private State state;
     //Actor level
     private Proposer proposer;
     private Acceptor acceptor;
@@ -34,7 +37,7 @@ public class Node {
     private Receiver receiver;
     private Sender sender;
 
-    public Node(int selfIndex, NodeRef[] all, Consumer<ProposalValue> learnedConsumer) throws IOException {
+    public Node(int selfIndex, NodeRef[] all) throws IOException {
         NodeRef.setSelf(all[selfIndex]);
         this.receiver = new Receiver();
         this.sender = new Sender();
@@ -42,9 +45,10 @@ public class Node {
         this.dispatcher = new Dispatcher(this.receiver);
         this.forwarder = new Forwarder(this.sender, all);
 
+        this.state = new State(this.forwarder);
         this.proposer = new Proposer(this.forwarder, this.dispatcher.getProposerConsumer());
         this.acceptor = new Acceptor(this.forwarder, this.dispatcher.getAcceptorConsumer());
-        this.learner = new Learner(this.forwarder, this.dispatcher.getLearnerConsumer(), learnedConsumer);
+        this.learner = new Learner(this.forwarder, this.dispatcher.getLearnerConsumer(), state::handle);
         this.elector = new Elector(this.forwarder, this.dispatcher.getElectorConsumer());
         LOGGER.info("NODE " + NodeRef.getSelf().getId() + " UP AND RUNNING");
     }

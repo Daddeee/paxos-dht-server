@@ -35,7 +35,7 @@
                     </descriptorRefs>
                     <archive>
                         <manifest>
-                            <mainClass>it.polimi.distsys.dht.Replica</mainClass>
+                            <mainClass>it.polimi.distsys.Replica</mainClass>
                         </manifest>
                     </archive>
                 </configuration>

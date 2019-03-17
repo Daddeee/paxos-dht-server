@@ -1,5 +1,8 @@
 package it.polimi.distsys.paxos.network;
 
+import it.polimi.distsys.dht.common.DHTMessage;
+import it.polimi.distsys.dht.common.Reply;
+import it.polimi.distsys.paxos.network.messages.NetworkMessageType;
 import it.polimi.distsys.paxos.protocol.messages.ProtocolMessage;
 import it.polimi.distsys.paxos.utils.NodeRef;
 import it.polimi.distsys.paxos.communication.Sender;
@@ -38,6 +41,11 @@ public class Forwarder {
             sendProducer.produce(new CommunicationMessage(NodeRef.getSelf(), receiverRef, message));
             return receiverRef;
         }));
+    }
+
+    public void send(Reply m, NodeRef to) {
+        NetworkMessage message = new NetworkMessage(NodeRef.getSelf().getId(), to.getId(), NetworkMessageType.DHT, m);
+        sendProducer.produce(new CommunicationMessage(NodeRef.getSelf(), to, message));
     }
 
     public void broadcast(ProtocolMessage m) {
