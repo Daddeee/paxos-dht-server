@@ -56,4 +56,8 @@ public class Node {
     public void propose(ProposalValue value) {
         this.forwarder.send(new Propose(value), Elector.getInstance().getLeaderId());
     }
+
+    public void debug() {
+        this.state.debugStorage();
+    }
 }

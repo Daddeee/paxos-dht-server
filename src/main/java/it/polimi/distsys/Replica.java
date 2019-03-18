@@ -22,6 +22,14 @@ public class Replica {
         String self = args.length > 0 ? args[0] : null;
         if(self == null) throw new RuntimeException("Need to specify the replica's number as an argument.");
         node = new Node(Integer.parseInt(self), receivers);
+
+        Scanner s = new Scanner(System.in);
+        while(true) {
+            String cmd = s.nextLine();
+
+            if(cmd.equals("debug")) node.debug();
+            else System.out.println("Unknown command");
+        }
     }
 
     private static NodeRef[] parseNodeRefs() throws IOException {

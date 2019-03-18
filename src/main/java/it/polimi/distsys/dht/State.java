@@ -22,6 +22,11 @@ public class State {
         this.forwarder = forwarder;
     }
 
+    public void debugStorage() {
+        System.out.println("STORAGE:");
+        storage.entrySet().forEach(e -> System.out.println(e.getKey() + "\t:\t" + e.getValue()));
+    }
+
     public void handle(ProposalValue v) {
         if(v instanceof Get)
             handleGet((Get) v);
