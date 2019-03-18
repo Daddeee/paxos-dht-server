@@ -28,6 +28,7 @@ public class State {
     }
 
     public void handle(ProposalValue v) {
+        LOGGER.info("Handling command.");
         if(v instanceof Get)
             handleGet((Get) v);
         else if(v instanceof Put)
@@ -38,6 +39,7 @@ public class State {
     }
 
     private void handleGet(Get g) {
+        LOGGER.info("Performing GET " + g.getKey());
         String s = storage.get(g.getKey());
         if(Elector.getInstance().iAmTheLeader()) {
             Reply r = g.getReply(s, true);
@@ -46,6 +48,7 @@ public class State {
     }
 
     private void handlePut(Put p) {
+        LOGGER.info("Performing PUT " + p.getKey() + " : " + p.getValue());
         storage.put(p.getKey(), p.getValue());
         if(Elector.getInstance().iAmTheLeader()) {
             Reply r = p.getReply("", true);
@@ -54,6 +57,7 @@ public class State {
     }
 
     private void handleRemove(Remove p) {
+        LOGGER.info("Performing REMOVE " + p.getKey());
         storage.remove(p.getKey());
         if(Elector.getInstance().iAmTheLeader()) {
             Reply r = p.getReply("", true);

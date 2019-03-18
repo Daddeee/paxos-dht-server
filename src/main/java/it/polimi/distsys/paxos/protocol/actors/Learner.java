@@ -33,8 +33,10 @@ public class Learner extends AbstractActor {
 
     @Override
     public void handle(final ProtocolMessage m) {
-        if(m instanceof Decide)
+        if(m instanceof Decide) {
+            LOGGER.info("Consuming DECIDE " + ((Decide) m).getLength());
             this.onDecide((Decide) m);
+        }
         else throw new RuntimeException("Unrecognized message");
     }
 
@@ -46,13 +48,21 @@ public class Learner extends AbstractActor {
         List<ProposalValue> va = Acceptor.getInstance().getAcceptedSequence();
 
 
+        LOGGER.info("NP: " + np.getProposalId() + ":" + np.getProposerId());
+        LOGGER.info("N : " + n.getProposalId() + ":" + n.getProposerId());
+        LOGGER.info("LD: " + ld);
+        LOGGER.info("L : " + l);
         if (np.compareTo(n) == 0 && ld <= l) {
+            LOGGER.info("Can process this: " + ld + " <? " + l);
             while(ld < l) {
+                LOGGER.info("Learn iteration: " + ld + " , " + l + ", " + va.get(ld));
                 decisionConsumer.accept(va.get(ld));
+                LOGGER.info(ld + " accepted");
                 ld++;
+                LOGGER.info("new ld: " + ld);
             }
-            LOGGER.info("Learned.");
         }
+        LOGGER.info("Learned.");
     }
 
     public static Learner getInstance() {

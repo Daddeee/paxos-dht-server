@@ -73,12 +73,12 @@ public class Proposer extends AbstractActor {
 
     private void handlePropose(Propose p) {
         if(firstProposal) {
-            LOGGER.info("First proposal, broadcasting prepare.");
             firstProposal = false;
             c = p.getValue();
             nc = nc.inc();
             vc = Acceptor.getInstance().getAcceptedSequence().subList(0, Learner.getInstance().getDecidedSequenceLength());
             reset();
+            LOGGER.info("First proposal, broadcasting prepare " + nc.getProposalId() + ":" + nc.getProposerId() + " L: " + vc.size());
             forwarder.broadcast(new Prepare(nc, vc.size()));
         } else {
             LOGGER.info("Extending previous proposal, broadcasting accept.");
