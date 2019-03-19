@@ -76,7 +76,7 @@ public class Proposer extends AbstractActor {
             firstProposal = false;
             c = p.getValue();
             nc = nc.inc();
-            vc = Acceptor.getInstance().getAcceptedSequence().subList(0, Learner.getInstance().getDecidedSequenceLength());
+            vc = Acceptor.getInstance().getAcceptedSequence().subList(0, Acceptor.getInstance().getDecidedSequenceLength());
             reset();
             LOGGER.info("First proposal, broadcasting prepare " + nc.getProposalId() + ":" + nc.getProposerId() + " L: " + vc.size());
             forwarder.broadcast(new Prepare(nc, vc.size()));
@@ -162,7 +162,7 @@ public class Proposer extends AbstractActor {
         int l = acc.getAcceptedLength();
 
         if(n.compareTo(nc) != 0) {
-            LOGGER.info("Old accepted. Skipping.");
+            LOGGER.info("Old proposal. Skipping.");
             return;
         }
 

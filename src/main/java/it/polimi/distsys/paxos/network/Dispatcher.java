@@ -17,11 +17,9 @@ public class Dispatcher {
     private QueueConsumer<CommunicationMessage> recvConsumer;
     private BlockingQueue<ProtocolMessage> proposerQueue;
     private BlockingQueue<ProtocolMessage> acceptorQueue;
-    private BlockingQueue<ProtocolMessage> learnerQueue;
     private BlockingQueue<ProtocolMessage> electorQueue;
     private QueueProducer<ProtocolMessage> proposerQueueProducer;
     private QueueProducer<ProtocolMessage> acceptorQueueProducer;
-    private QueueProducer<ProtocolMessage> learnerQueueProducer;
     private QueueProducer<ProtocolMessage> electorQueueProducer;
 
     public Dispatcher(Receiver receiver) {
@@ -30,11 +28,9 @@ public class Dispatcher {
 
         this.proposerQueue = new LinkedBlockingQueue<>();
         this.acceptorQueue = new LinkedBlockingQueue<>();
-        this.learnerQueue = new LinkedBlockingQueue<>();
         this.electorQueue = new LinkedBlockingQueue<>();
         this.proposerQueueProducer = new QueueProducer<>(this.proposerQueue);
         this.acceptorQueueProducer = new QueueProducer<>(this.acceptorQueue);
-        this.learnerQueueProducer = new QueueProducer<>(this.learnerQueue);
         this.electorQueueProducer = new QueueProducer<>(this.electorQueue);
     }
 
@@ -44,10 +40,6 @@ public class Dispatcher {
 
     public QueueConsumer<ProtocolMessage> getAcceptorConsumer() {
         return new QueueConsumer<>(this.acceptorQueue);
-    }
-
-    public QueueConsumer<ProtocolMessage> getLearnerConsumer() {
-        return new QueueConsumer<>(this.learnerQueue);
     }
 
     public QueueConsumer<ProtocolMessage> getElectorConsumer() {
@@ -74,7 +66,7 @@ public class Dispatcher {
             this.proposerQueueProducer.produce((Accepted) message.getBody());
             break;
             case DECIDE:
-            this.learnerQueueProducer.produce((Decide) message.getBody());
+            this.acceptorQueueProducer.produce((Decide) message.getBody());
             break;
             case HEARTBEAT:
             this.electorQueueProducer.produce((HeartBeat) message.getBody());

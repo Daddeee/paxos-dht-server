@@ -1,9 +1,6 @@
 package it.polimi.distsys.dht;
 
-import it.polimi.distsys.dht.common.Get;
-import it.polimi.distsys.dht.common.Put;
-import it.polimi.distsys.dht.common.Remove;
-import it.polimi.distsys.dht.common.Reply;
+import it.polimi.distsys.dht.common.*;
 import it.polimi.distsys.paxos.network.Forwarder;
 import it.polimi.distsys.paxos.protocol.ProposalValue;
 import it.polimi.distsys.paxos.protocol.actors.Elector;
@@ -35,6 +32,8 @@ public class State {
             handlePut((Put) v);
         else if(v instanceof Remove)
             handleRemove((Remove) v);
+        else if(v instanceof Reply)
+            LOGGER.info("NO-OP");
         else LOGGER.error("Unrecognized command");
     }
 
@@ -63,5 +62,15 @@ public class State {
             Reply r = p.getReply("", true);
             this.forwarder.send(r, p.getReplyNode());
         }
+    }
+
+    public static String print(DHTMessage m) {
+        if(m instanceof Get)
+            return "GET " + ((Get) m).getKey();
+        else if(m instanceof Put)
+            return "PUT " + ((Put) m).getKey() + " : " + ((Put) m).getValue();
+        else if(m instanceof Remove)
+            return "REMOVE " + ((Remove) m).getKey();
+        else return "";
     }
 }
