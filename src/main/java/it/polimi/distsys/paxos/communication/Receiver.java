@@ -1,10 +1,7 @@
 package it.polimi.distsys.paxos.communication;
 
 import it.polimi.distsys.paxos.communication.messages.CommunicationMessage;
-import it.polimi.distsys.paxos.utils.NodeRef;
-import it.polimi.distsys.paxos.utils.QueueConsumer;
-import it.polimi.distsys.paxos.utils.QueueProducer;
-import it.polimi.distsys.paxos.utils.ThreadUtil;
+import it.polimi.distsys.paxos.utils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,7 +25,7 @@ public class Receiver {
         this.serverSocket = new ServerSocket(NodeRef.getSelf().getPort(), 0, InetAddress.getByName(NodeRef.getSelf().getIp()));
         this.running = true;
         this.recvQueue = new LinkedBlockingQueue<>();
-        this.recvProducer = new QueueProducer<>(this.recvQueue);
+        this.recvProducer = new SynchronousQueueProducer<>(this.recvQueue);
         ThreadUtil.getExecutorService().submit(() -> {
             while (running) { accept(); }
             close();

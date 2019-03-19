@@ -6,6 +6,7 @@ import it.polimi.distsys.paxos.network.messages.NetworkMessage;
 import it.polimi.distsys.paxos.protocol.messages.*;
 import it.polimi.distsys.paxos.utils.QueueConsumer;
 import it.polimi.distsys.paxos.utils.QueueProducer;
+import it.polimi.distsys.paxos.utils.SynchronousQueueProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +30,9 @@ public class Dispatcher {
         this.proposerQueue = new LinkedBlockingQueue<>();
         this.acceptorQueue = new LinkedBlockingQueue<>();
         this.electorQueue = new LinkedBlockingQueue<>();
-        this.proposerQueueProducer = new QueueProducer<>(this.proposerQueue);
-        this.acceptorQueueProducer = new QueueProducer<>(this.acceptorQueue);
-        this.electorQueueProducer = new QueueProducer<>(this.electorQueue);
+        this.proposerQueueProducer = new SynchronousQueueProducer<>(this.proposerQueue);
+        this.acceptorQueueProducer = new SynchronousQueueProducer<>(this.acceptorQueue);
+        this.electorQueueProducer = new SynchronousQueueProducer<>(this.electorQueue);
     }
 
     public QueueConsumer<ProtocolMessage> getProposerConsumer() {

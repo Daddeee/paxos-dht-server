@@ -6,7 +6,6 @@ import it.polimi.distsys.paxos.network.Forwarder;
 import it.polimi.distsys.paxos.protocol.ProposalNumber;
 import it.polimi.distsys.paxos.protocol.ProposalValue;
 import it.polimi.distsys.paxos.protocol.messages.*;
-import it.polimi.distsys.paxos.utils.NodeRef;
 import it.polimi.distsys.paxos.utils.QueueConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
