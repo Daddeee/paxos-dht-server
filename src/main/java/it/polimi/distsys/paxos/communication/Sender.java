@@ -3,6 +3,7 @@ package it.polimi.distsys.paxos.communication;
 import it.polimi.distsys.paxos.communication.messages.CommunicationMessage;
 import it.polimi.distsys.paxos.utils.QueueConsumer;
 import it.polimi.distsys.paxos.utils.QueueProducer;
+import it.polimi.distsys.paxos.utils.SynchronousQueueProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,7 +25,7 @@ public class Sender {
     }
 
     public QueueProducer<CommunicationMessage> getSendProducer() {
-        return new QueueProducer<>(sendQueue);
+        return new SynchronousQueueProducer<>(sendQueue);
     }
 
     private void send(CommunicationMessage m) {

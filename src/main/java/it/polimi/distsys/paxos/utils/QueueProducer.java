@@ -17,7 +17,7 @@ public class QueueProducer<T> {
         ThreadUtil.getExecutorService().submit(() -> produceObject(m));
     }
 
-    private void produceObject(T m) {
+    protected void produceObject(T m) {
         try {
             queue.put(m);
         } catch (InterruptedException e) {
