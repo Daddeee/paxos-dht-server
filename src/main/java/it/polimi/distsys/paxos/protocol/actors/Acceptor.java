@@ -70,31 +70,13 @@ public class Acceptor extends AbstractActor {
         List<ProposalValue> v = a.getProposalSuffix();
         int offs = a.getOffset();
 
-        StringBuilder ssb = new StringBuilder("(");
-        v.forEach(l -> ssb.append(State.print((DHTMessage) l)).append(", "));
-        LOGGER.info("Offset: " + offs);
-        LOGGER.info("Suffix: " + ssb.toString() + ")");
-
         if(np.compareTo(n) == 0) {
             LOGGER.info("Accepting same proposal as what i promised.");
-            LOGGER.info("Currently accepted sequence: (size = " + va.size() + ")");
             na = n;
-            if(offs < va.size()) {
-                LOGGER.info("Received offs = " + offs);
+            if(offs < va.size())
                 va = Collections.synchronizedList(new ArrayList<>(va.subList(0, offs)));
-                LOGGER.info("New accepted sequence:");
-            }
 
-            StringBuilder vasb = new StringBuilder("(");
-            va.forEach(l -> vasb.append(State.print((DHTMessage) l)).append(", "));
-            LOGGER.info(vasb.toString() + ")");
-
-
-            LOGGER.info("Merging new values.");
             va.addAll(v);
-            StringBuilder vasb1 = new StringBuilder("(");
-            va.forEach(l -> vasb1.append(State.print((DHTMessage) l)).append(", "));
-            LOGGER.info(vasb1.toString() + ")");
 
             LOGGER.info("Sending Accepted to Proposer.");
             forwarder.send(new Accepted(n, va.size()), a.getFrom());
