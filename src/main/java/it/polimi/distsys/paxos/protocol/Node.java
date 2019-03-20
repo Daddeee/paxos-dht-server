@@ -17,12 +17,15 @@ import java.io.IOException;
 
 public class Node {
     private static final Logger LOGGER = LoggerFactory.getLogger(Node.class);
-    //DHT level
+    //Protocol level
+    //DHT
     private State state;
-    //Actor level
+    //Actor
     private Proposer proposer;
     private Acceptor acceptor;
     private Elector elector;
+    //Ledger
+    private Ledger ledger;
 
     //Network level
     private Dispatcher dispatcher;
@@ -41,8 +44,9 @@ public class Node {
         this.forwarder = new Forwarder(this.sender, all);
 
         this.state = new State(this.forwarder);
-        this.proposer = new Proposer(this.forwarder, this.dispatcher.getProposerConsumer());
+        this.ledger = new Ledger();
         this.acceptor = new Acceptor(this.forwarder, this.dispatcher.getAcceptorConsumer(), state::handle);
+        this.proposer = new Proposer(this.forwarder, this.dispatcher.getProposerConsumer());
         this.elector = new Elector(this.forwarder, this.dispatcher.getElectorConsumer());
         LOGGER.info("NODE " + NodeRef.getSelf().getId() + " UP AND RUNNING");
     }

@@ -30,6 +30,7 @@ public class Proposer extends AbstractActor {
 
     public Proposer(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer) {
         super(forwarder, consumer);
+        instance = this;
         this.firstProposal = true;
         this.nc = new ProposalNumber(0);
         this.vc = new ArrayList<>();
@@ -38,7 +39,7 @@ public class Proposer extends AbstractActor {
         this.lc = 0;
         this.promises = 0;
         this.quorum = forwarder.getNumReceivers()/2 + 1;
-        instance = this;
+        consumer.consume(this::handle);
     }
 
     public void setCurrentProposalNumber(ProposalNumber nc) {
@@ -88,6 +89,7 @@ public class Proposer extends AbstractActor {
             ids.forEach(id -> {
                 int t = s.get(id);
                 s.put(id, vc.size());
+                LOGGER.info("s[" + id + "] setted to " + vc.size());
                 List<ProposalValue> suffix = new ArrayList<>(vc.subList(t, vc.size()));
                 forwarder.send(new Accept(nc, suffix, t), id);
             });
@@ -126,6 +128,7 @@ public class Proposer extends AbstractActor {
         }
 
         s.put(p.getFrom(), l);
+        LOGGER.info("s[" + p.getFrom() + "] setted to " + vc.size());
 
         if(na.compareTo(ns) > 0 || (na.compareTo(ns) == 0 && va.size() > vs.size())) {
             ns = na;
@@ -144,6 +147,7 @@ public class Proposer extends AbstractActor {
             ids.forEach(id -> {
                 int t = s.get(id);
                 s.put(id, vc.size());
+                LOGGER.info("s[" + id + "] setted to " + vc.size());
                 List<ProposalValue> suffix = new ArrayList<>(vc.subList(t, vc.size()));
                 forwarder.send(new Accept(nc, suffix, t), id);
             });
@@ -151,6 +155,7 @@ public class Proposer extends AbstractActor {
             List<ProposalValue> suffix = new ArrayList<>(vc.subList(l, vc.size()));
             forwarder.send(new Accept(nc, suffix, l), p.getFrom());
             s.put(p.getFrom(), vc.size());
+            LOGGER.info("s[" + p.getFrom() + "] setted to " + vc.size());
             if(lc != 0)
                 forwarder.send(new Decide(nc, lc), p.getFrom());
         }

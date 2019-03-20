@@ -25,14 +25,14 @@ public class Elector extends AbstractActor {
 
     public Elector(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer) {
         super(forwarder, consumer);
+        instance = this;
         this.heartBeatTimer = new Timer();
         this.leaderCheckTimer = new Timer();
         this.leaderId = NodeRef.getSelf().getId();
         this.hasBeated = false;
-        instance = this;
         leaderCheckTimer.scheduleAtFixedRate(getTimerTask(this::checkLeader), 0, ELECTION_TIMEOUT_MS);
         heartBeatTimer.scheduleAtFixedRate(getTimerTask(this::beat), 0, HEARTBEAT_RATE_MS);
-
+        consumer.consume(this::handle);
     }
 
     public int getLeaderId() {

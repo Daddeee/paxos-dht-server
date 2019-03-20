@@ -3,6 +3,7 @@ package it.polimi.distsys.paxos.protocol.actors;
 import it.polimi.distsys.dht.State;
 import it.polimi.distsys.dht.common.DHTMessage;
 import it.polimi.distsys.paxos.network.Forwarder;
+import it.polimi.distsys.paxos.protocol.Ledger;
 import it.polimi.distsys.paxos.protocol.ProposalNumber;
 import it.polimi.distsys.paxos.protocol.ProposalValue;
 import it.polimi.distsys.paxos.protocol.messages.*;
@@ -27,13 +28,11 @@ public class Acceptor extends AbstractActor {
 
     public Acceptor(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer, Consumer<ProposalValue> decisionConsumer) {
         super(forwarder, consumer);
-        this.np = new ProposalNumber(0);
-        this.na = new ProposalNumber(0);
-        this.va = Collections.synchronizedList(new ArrayList<>());
+        instance = this;
+        Ledger.getInstance().retrieve();
         this.decisionConsumer = decisionConsumer;
         this.ld = 0;
-
-        instance = this;
+        consumer.consume(this::handle);
     }
 
     @Override
@@ -58,24 +57,29 @@ public class Acceptor extends AbstractActor {
         if(np.compareTo(n) < 0) {
             LOGGER.info("This is a new prepare. Promising.");
             np = n;
+            Ledger.getInstance().persist();
             List<ProposalValue> suffix = new ArrayList<>(va.subList(p.getSequenceLength(), va.size()));
             forwarder.send(new Promise(np, na, suffix, ld), p.getFrom());
         }
     }
 
     private void onAccept(Accept a) {
-        LOGGER.info("Received Accept " + a.getProposalNumber().getProposalId() + ":" + a.getProposalNumber().getProposerId());
+        LOGGER.info("Received Accept " + a.getProposalNumber().getProposalId() + ":" + a.getProposalNumber().getProposerId() +
+                " , OFFS: " + a.getOffset() + " , SUFFIX SIZE: " + a.getProposalSuffix().size());
         ProposalNumber n = a.getProposalNumber();
         List<ProposalValue> v = a.getProposalSuffix();
         int offs = a.getOffset();
 
         if(np.compareTo(n) == 0) {
             LOGGER.info("Accepting same proposal as what i promised.");
+
+            LOGGER.info("Old va size: " + va.size());
             na = n;
             if(offs < va.size())
                 va = Collections.synchronizedList(new ArrayList<>(va.subList(0, offs)));
-
             va.addAll(v);
+            Ledger.getInstance().persist();
+            LOGGER.info("New va size: " + va.size());
 
             LOGGER.info("Sending Accepted to Proposer.");
             forwarder.send(new Accepted(n, va.size()), a.getFrom());
@@ -87,6 +91,11 @@ public class Acceptor extends AbstractActor {
         ProposalNumber n = d.getCurrent();
         int l = d.getLength();
 
+        LOGGER.info("N   :" + n.getProposalId() + ":" + n.getProposerId());
+        LOGGER.info("NP  :" + np.getProposalId() + ":" + n.getProposerId());
+        LOGGER.info("LD  :" + ld);
+        LOGGER.info("L   :" + l);
+        LOGGER.info("|VA|:" + va.size());
         if (np.compareTo(n) == 0 && ld <= l && l <= va.size()) {
             while(ld < l) {
                 LOGGER.info("Deciding: " + State.print((DHTMessage) va.get(ld)));
@@ -101,8 +110,24 @@ public class Acceptor extends AbstractActor {
         return np;
     }
 
+    public void setPromised(ProposalNumber np) {
+        this.np = np;
+    }
+
+    public ProposalNumber getAccepted() {
+        return na;
+    }
+
+    public void setAccepted(ProposalNumber na) {
+        this.na = na;
+    }
+
     public List<ProposalValue> getAcceptedSequence() {
         return va;
+    }
+
+    public void setAcceptedSequence(List<ProposalValue> va) {
+        this.va = va;
     }
 
     public static Acceptor getInstance() {

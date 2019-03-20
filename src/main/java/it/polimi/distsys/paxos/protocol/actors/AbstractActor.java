@@ -12,7 +12,6 @@ public abstract class AbstractActor {
     public AbstractActor(Forwarder forwarder, QueueConsumer<ProtocolMessage> consumer) {
         this.forwarder = forwarder;
         this.consumer = consumer;
-        consumer.consume(this::handle);
     }
 
     public abstract void handle(ProtocolMessage m);
