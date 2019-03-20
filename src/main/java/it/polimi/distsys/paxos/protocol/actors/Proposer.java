@@ -88,8 +88,6 @@ public class Proposer extends AbstractActor {
             List<Integer> ids = s.keySet().stream().filter(k -> s.get(k) != null).collect(Collectors.toList());
             ids.forEach(id -> {
                 int t = s.get(id);
-                s.put(id, vc.size());
-                LOGGER.info("s[" + id + "] setted to " + vc.size());
                 List<ProposalValue> suffix = new ArrayList<>(vc.subList(t, vc.size()));
                 forwarder.send(new Accept(nc, suffix, t), id);
             });
@@ -146,16 +144,12 @@ public class Proposer extends AbstractActor {
             List<Integer> ids = s.keySet().stream().filter(k -> s.get(k) != null).collect(Collectors.toList());
             ids.forEach(id -> {
                 int t = s.get(id);
-                s.put(id, vc.size());
-                LOGGER.info("s[" + id + "] setted to " + vc.size());
                 List<ProposalValue> suffix = new ArrayList<>(vc.subList(t, vc.size()));
                 forwarder.send(new Accept(nc, suffix, t), id);
             });
         } else if(promises > quorum) {
             List<ProposalValue> suffix = new ArrayList<>(vc.subList(l, vc.size()));
             forwarder.send(new Accept(nc, suffix, l), p.getFrom());
-            s.put(p.getFrom(), vc.size());
-            LOGGER.info("s[" + p.getFrom() + "] setted to " + vc.size());
             if(lc != 0)
                 forwarder.send(new Decide(nc, lc), p.getFrom());
         }
@@ -165,6 +159,9 @@ public class Proposer extends AbstractActor {
         LOGGER.info("Received accepted from " + acc.getFrom() + ".");
         ProposalNumber n = acc.getAcceptedProposalNumber();
         int l = acc.getAcceptedLength();
+
+        s.put(acc.getFrom(), l);
+        LOGGER.info("s[" + acc.getFrom() + "] setted to " + vc.size());
 
         if(n.compareTo(nc) != 0) {
             LOGGER.info("Old proposal. Skipping.");
